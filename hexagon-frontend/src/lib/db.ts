@@ -1,18 +1,15 @@
 import { MongoClient, Db } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI!;
 const DB_NAME = process.env.DB_NAME || 'hexagon_db';
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 export async function getDb(): Promise<Db> {
   if (cachedDb) return cachedDb;
-  const client = new MongoClient(MONGODB_URI);
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error('MONGODB_URI environment variable is not set');
+  const client = new MongoClient(uri);
   await client.connect();
   cachedClient = client;
   cachedDb = client.db(DB_NAME);
