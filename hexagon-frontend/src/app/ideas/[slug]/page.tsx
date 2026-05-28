@@ -11,7 +11,7 @@ import {
   formatFileSize,
   getCategoryColor,
 } from "@/lib/utils";
-import IdeaDetailSkeleton, { ErrorState } from "@/components/LoadingSkeleton";
+import { IdeaDetailSkeleton, ErrorState } from "@/components/LoadingSkeleton";
 import VoteButton from "@/components/VoteButton";
 import CommentTree from "@/components/CommentTree";
 import { useToast } from "@/components/Toast";

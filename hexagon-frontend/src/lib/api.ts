@@ -7,11 +7,11 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_URL || "";
 
-// Create axios instance
+// Create axios instance — empty baseURL means relative to current origin (Next.js API routes)
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL || undefined,
   headers: {
     "Content-Type": "application/json",
   },
@@ -52,6 +52,11 @@ export default apiClient;
 
 // ─────────────────────────────────────────────────────────────
 // Typed API methods — all idea_id / comment_id / user_id are strings
+// Routes restructured to avoid Next.js catch-all conflicts:
+//   /api/votes (POST/DELETE) + /api/votes/summary (GET)
+//   /api/comments (GET/POST) + /api/comments/[commentId] (PUT/DELETE)
+//   /api/institutional/interests (GET/POST/PUT/DELETE)
+//   /api/institutional/dashboard (GET)
 // ─────────────────────────────────────────────────────────────
 export const api = {
   // Auth
@@ -61,108 +66,112 @@ export const api = {
       username: string;
       password: string;
       full_name?: string;
-    }) => apiClient.post("/auth/register", data),
+    }) => apiClient.post("/api/auth/register", data),
 
     login: (data: { email: string; password: string }) =>
-      apiClient.post("/auth/login", data),
+      apiClient.post("/api/auth/login", data),
 
-    getMe: () => apiClient.get("/auth/me"),
+    getMe: () => apiClient.get("/api/auth/me"),
   },
 
   // Users
   users: {
     getProfile: (username: string) =>
-      apiClient.get(`/users/${username}`),
+      apiClient.get(`/api/users/${username}`),
 
-    getOwnProfile: () => apiClient.get("/users/me"),
+    getOwnProfile: () => apiClient.get("/api/users/me"),
 
     updateProfile: (data: {
       full_name?: string;
       bio?: string;
       avatar_url?: string;
-    }) => apiClient.put("/users/me", data),
+    }) => apiClient.put("/api/users/me", data),
   },
 
   // Ideas
   ideas: {
     list: (params?: {
       category?: string;
-      region?: string;
-      sort_by?: string;
+      status?: string;
+      sort?: string;
       limit?: number;
       offset?: number;
-    }) => apiClient.get("/ideas", { params }),
+    }) => apiClient.get("/api/ideas", { params }),
 
     search: (query: string, params?: { limit?: number; offset?: number }) =>
-      apiClient.get("/ideas/search", { params: { q: query, ...params } }),
+      apiClient.get("/api/ideas/search", { params: { q: query, ...params } }),
 
-    get: (slug: string) => apiClient.get(`/ideas/${slug}`),
+    get: (slug: string) => apiClient.get(`/api/ideas/${slug}`),
 
     create: (data: Record<string, unknown>) =>
-      apiClient.post("/ideas", data),
+      apiClient.post("/api/ideas", data),
 
     update: (slug: string, data: Record<string, unknown>) =>
-      apiClient.put(`/ideas/${slug}`, data),
+      apiClient.put(`/api/ideas/${slug}`, data),
 
-    delete: (slug: string) => apiClient.delete(`/ideas/${slug}`),
+    delete: (slug: string) => apiClient.delete(`/api/ideas/${slug}`),
 
     uploadFile: (slug: string, file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      return apiClient.post(`/ideas/${slug}/files`, formData, {
+      return apiClient.post(`/api/ideas/${slug}/files`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
     },
 
-    getVersions: (slug: string) => apiClient.get(`/ideas/${slug}/versions`),
+    getVersions: (slug: string) => apiClient.get(`/api/ideas/${slug}/versions`),
   },
 
   // Votes — idea_id is a string (ObjectId)
+  // Restructured: POST/DELETE /api/votes, GET /api/votes/summary?idea_id=xxx
   votes: {
     cast: (ideaId: string, voteType: "upvote" | "downvote") =>
-      apiClient.post(`/ideas/${ideaId}/votes`, { vote_type: voteType }),
+      apiClient.post("/api/votes", { idea_id: ideaId, vote_type: voteType }),
 
-    remove: (ideaId: string) => apiClient.delete(`/ideas/${ideaId}/votes`),
+    remove: (ideaId: string) =>
+      apiClient.delete("/api/votes", { data: { idea_id: ideaId } }),
 
     getSummary: (ideaId: string) =>
-      apiClient.get(`/ideas/${ideaId}/votes/summary`),
+      apiClient.get("/api/votes/summary", { params: { idea_id: ideaId } }),
   },
 
   // Comments — idea_id and comment_id are strings
+  // Restructured: GET/POST /api/comments, PUT/DELETE /api/comments/[commentId]
   comments: {
     list: (ideaId: string, isSuggestion?: boolean) =>
-      apiClient.get(`/ideas/${ideaId}/comments`, {
-        params: { is_suggestion: isSuggestion },
+      apiClient.get("/api/comments", {
+        params: { idea_id: ideaId, is_suggestion: isSuggestion },
       }),
 
     create: (
       ideaId: string,
       data: { content: string; parent_id?: string; is_suggestion?: boolean }
-    ) => apiClient.post(`/ideas/${ideaId}/comments`, data),
+    ) => apiClient.post("/api/comments", { idea_id: ideaId, ...data }),
 
     update: (ideaId: string, commentId: string, content: string) =>
-      apiClient.put(`/ideas/${ideaId}/comments/${commentId}`, { content }),
+      apiClient.put(`/api/comments/${commentId}`, { content }),
 
     delete: (ideaId: string, commentId: string) =>
-      apiClient.delete(`/ideas/${ideaId}/comments/${commentId}`),
+      apiClient.delete(`/api/comments/${commentId}`),
   },
 
   // Institutional
+  // Restructured: /api/institutional/interests (GET/POST/PUT/DELETE), /api/institutional/dashboard (GET)
   institutional: {
     getInterests: (ideaId: string) =>
-      apiClient.get(`/institutional/ideas/${ideaId}/interests`),
+      apiClient.get("/api/institutional/interests", { params: { idea_id: ideaId } }),
 
     markInterest: (
       ideaId: string,
       data: { status: string; notes?: string }
-    ) => apiClient.post(`/institutional/ideas/${ideaId}/interests`, data),
+    ) => apiClient.post("/api/institutional/interests", { idea_id: ideaId, ...data }),
 
     updateInterest: (ideaId: string, data: { status?: string; notes?: string }) =>
-      apiClient.put(`/institutional/ideas/${ideaId}/interests`, data),
+      apiClient.put("/api/institutional/interests", { idea_id: ideaId, ...data }),
 
     removeInterest: (ideaId: string) =>
-      apiClient.delete(`/institutional/ideas/${ideaId}/interests`),
+      apiClient.delete("/api/institutional/interests", { data: { idea_id: ideaId } }),
 
-    getDashboard: () => apiClient.get("/institutional/dashboard"),
+    getDashboard: () => apiClient.get("/api/institutional/dashboard"),
   },
 };

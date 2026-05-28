@@ -52,7 +52,7 @@ export default function IdeasPage() {
 
       try {
         const params: Record<string, unknown> = {
-          sort_by: sortBy,
+          sort: sortBy,
           limit: PAGE_SIZE,
           offset: currentOffset,
         };
@@ -69,7 +69,7 @@ export default function IdeasPage() {
           setHasMore(items.length === PAGE_SIZE);
         } else {
           const response = await api.ideas.list(
-            params as { category?: string; region?: string; sort_by?: string; limit?: number; offset?: number }
+            params as { category?: string; status?: string; sort?: string; limit?: number; offset?: number }
           );
           const data = response.data;
           const items = Array.isArray(data) ? data : (data as { items?: IdeaListItem[] }).items || [];

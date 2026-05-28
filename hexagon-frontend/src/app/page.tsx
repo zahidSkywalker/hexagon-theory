@@ -17,7 +17,7 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.ideas.list({ sort_by: "trending", limit: 6 });
+      const response = await api.ideas.list({ sort: "trending", limit: 6 });
       setIdeas(response.data);
     } catch (err) {
       console.error("Error fetching ideas:", err);
