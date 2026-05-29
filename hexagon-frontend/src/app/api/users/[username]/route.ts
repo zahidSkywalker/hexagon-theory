@@ -31,7 +31,6 @@ export async function GET(
 
     return NextResponse.json({
       id: serialized._id,
-      email: serialized.email,
       username: serialized.username,
       full_name: serialized.full_name,
       bio: serialized.bio,

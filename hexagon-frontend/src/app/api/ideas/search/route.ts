@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     if (!q || q.length < 3) {
@@ -18,8 +18,9 @@ export async function GET(request: NextRequest) {
 
     const db = await getDb();
 
-    // Case-insensitive regex search in title, problem_statement, and description
-    const searchRegex = { $regex: q, $options: 'i' };
+    // Escape special regex characters to prevent ReDoS attacks
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = { $regex: escaped, $options: 'i' };
     const query = {
       $or: [
         { title: searchRegex },

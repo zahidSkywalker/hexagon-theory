@@ -69,7 +69,9 @@ export default function IdeaDetailPage() {
       ]);
 
       setVoteSummary(voteRes.data);
-      setComments(commentsRes.data);
+      // Handle comment response: API returns {comments:[], total:N}
+      const commentsData = commentsRes.data;
+      setComments(Array.isArray(commentsData) ? commentsData : (commentsData as { comments?: unknown[] }).comments || []);
     } catch (err: unknown) {
       console.error("Error fetching idea:", err);
       const axiosErr = err as { response?: { status?: number } };

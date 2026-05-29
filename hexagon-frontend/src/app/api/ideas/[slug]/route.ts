@@ -66,11 +66,9 @@ export async function GET(
         full_name: authorSerialized.full_name,
         avatar_url: authorSerialized.avatar_url,
       } : null,
-      votes: {
-        upvotes,
-        downvotes,
-        user_vote: userVote,
-      },
+      upvote_count: upvotes,
+      downvote_count: downvotes,
+      user_vote: userVote,
       comment_count: commentCount,
     });
   } catch (error: unknown) {

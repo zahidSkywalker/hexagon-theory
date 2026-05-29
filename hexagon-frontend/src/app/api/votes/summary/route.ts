@@ -49,8 +49,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       idea_id,
-      upvotes,
-      downvotes,
+      upvote_count: upvotes,
+      downvote_count: downvotes,
+      net_votes: upvotes - downvotes,
       user_vote,
     });
   } catch (error: unknown) {

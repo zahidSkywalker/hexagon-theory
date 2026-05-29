@@ -4,8 +4,15 @@ import { NextRequest } from 'next/server';
 import { getDb, serializeDoc } from './db';
 import { ObjectId } from 'mongodb';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hexagon-jwt-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || '';
 const JWT_EXPIRY = '24h';
+
+function requireJwtSecret(): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not configured');
+  }
+  return JWT_SECRET;
+}
 
 // ─────────────────────────────────────────────
 // Password helpers
@@ -22,12 +29,12 @@ export async function comparePassword(password: string, hash: string): Promise<b
 // JWT helpers
 // ─────────────────────────────────────────────
 export function generateToken(userId: string): string {
-  return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+  return jwt.sign({ sub: userId }, requireJwtSecret(), { expiresIn: JWT_EXPIRY });
 }
 
 export function verifyToken(token: string): { sub: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { sub: string };
+    const decoded = jwt.verify(token, requireJwtSecret()) as { sub: string };
     return decoded;
   } catch {
     return null;

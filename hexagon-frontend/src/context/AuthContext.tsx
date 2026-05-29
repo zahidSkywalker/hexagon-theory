@@ -56,8 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await api.auth.login({ email, password });
-    const tokenData: TokenResponse = response.data;
-    localStorage.setItem("access_token", tokenData.access_token);
+    // Defensive: handle both 'access_token' (new) and 'token' (old) field names
+    const data = response.data as Record<string, unknown>;
+    const accessToken = (data.access_token || data.token) as string;
+    if (!accessToken) {
+      throw new Error('No access token received from server');
+    }
+    localStorage.setItem("access_token", accessToken);
     const userResponse = await api.auth.getMe();
     setUser(userResponse.data);
   };

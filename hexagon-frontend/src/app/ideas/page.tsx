@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -26,7 +27,7 @@ const CATEGORIES = [
 
 const PAGE_SIZE = 24;
 
-export default function IdeasPage() {
+function IdeasPageContent() {
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get("category") || "All";
 
@@ -256,5 +257,21 @@ export default function IdeasPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function IdeasPage() {
+  return (
+    <Suspense fallback={
+      <div className="container-custom py-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <IdeaCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    }>
+      <IdeasPageContent />
+    </Suspense>
   );
 }
