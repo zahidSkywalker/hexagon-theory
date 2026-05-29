@@ -108,14 +108,19 @@ export default function NewIdeaPage() {
 
     try {
       const response = await api.ideas.create(formData);
-      const ideaSlug = response.data.slug;
+      const ideaSlug = (response.data as Record<string, unknown>).slug as string;
+      if (!ideaSlug) {
+        throw new Error("Idea creation returned no slug");
+      }
 
+      // Upload files (non-blocking — failures are logged but don't block submission)
       if (files.length > 0) {
         for (const file of files) {
           try {
             await api.ideas.uploadFile(ideaSlug, file);
           } catch (fileErr) {
-            console.error("File upload failed:", fileErr);
+            console.error("File upload failed for", file.name, fileErr);
+            // Don't block the whole submission for a file upload failure
           }
         }
       }
@@ -123,9 +128,11 @@ export default function NewIdeaPage() {
       showToast("Idea submitted successfully!", "success");
       router.push(`/ideas/${ideaSlug}`);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
+      const serverMsg = axiosErr?.response?.data?.detail;
+      const clientMsg = axiosErr?.message;
       setError(
-        axiosErr?.response?.data?.detail || "Failed to submit idea"
+        serverMsg || clientMsg || "Failed to submit idea. Please try again."
       );
       setSubmitting(false);
     }

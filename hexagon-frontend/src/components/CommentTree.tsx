@@ -33,6 +33,8 @@ function CommentItem({
   const [replying, setReplying] = useState(false);
 
   const isOwner = user?.id === comment.user_id;
+  // Guard against missing user data
+  const commentAuthor = comment.user || { id: '', username: 'unknown', full_name: null, avatar_url: null, role: 'user' };
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,10 +62,10 @@ function CommentItem({
         {/* Header */}
         <div className="flex items-center gap-2 mb-1.5">
           <div className="h-6 w-6 rounded-full bg-primary-700 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-            {comment.user.username.charAt(0).toUpperCase()}
+            {commentAuthor.username.charAt(0).toUpperCase()}
           </div>
           <span className="text-sm font-semibold text-gray-200">
-            @{comment.user.username}
+            @{commentAuthor.username}
           </span>
           <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
           {comment.is_edited && (

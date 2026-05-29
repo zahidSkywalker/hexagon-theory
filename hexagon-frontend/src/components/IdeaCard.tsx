@@ -12,6 +12,8 @@ interface IdeaCardProps {
 
 export default function IdeaCard({ idea }: IdeaCardProps) {
   const netVotes = idea.upvote_count - idea.downvote_count;
+  // Guard against missing author data
+  const author = idea.author || { id: '', username: 'unknown', full_name: null, avatar_url: null, role: 'user' };
 
   return (
     <Link
@@ -43,11 +45,11 @@ export default function IdeaCard({ idea }: IdeaCardProps) {
       <div className="flex items-center justify-between text-xs text-gray-500 mt-4 pt-3 border-t border-hexagon-border">
         <div className="flex items-center gap-3">
           <Link
-            href={`/profile/${idea.author.username}`}
+            href={`/profile/${author.username}`}
             onClick={(e) => e.stopPropagation()}
             className="font-medium text-gray-400 hover:text-primary-400 transition-colors"
           >
-            @{idea.author.username}
+            @{author.username}
           </Link>
           <span className="flex items-center gap-1">
             <Eye className="h-3.5 w-3.5" />

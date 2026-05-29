@@ -42,6 +42,7 @@ async function createIndexes(db: Db) {
 }
 
 // Helper to serialize MongoDB documents (convert ObjectId to string, Date to ISO)
+// Always outputs both `_id` and `id` so frontend can rely on `id`
 export function serializeDoc(doc: Record<string, unknown>): Record<string, unknown> {
   const serialized: Record<string, unknown> = {};
   for (const key in doc) {
@@ -60,7 +61,10 @@ export function serializeDoc(doc: Record<string, unknown>): Record<string, unkno
         item && typeof item === 'object' ? serializeDoc(item as Record<string, unknown>) : item
       );
     } else if (key === '_id' && value) {
-      serialized[key] = (value as { toString(): string }).toString();
+      const idStr = (value as { toString(): string }).toString();
+      serialized[key] = idStr;
+      // Always also expose as `id` for frontend compatibility
+      serialized['id'] = idStr;
     } else {
       serialized[key] = value;
     }

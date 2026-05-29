@@ -173,6 +173,8 @@ export default function IdeaDetailPage() {
     );
   }
 
+  // Guard against missing author data (e.g. deleted user)
+  const author = idea.author || { id: '', username: 'unknown', full_name: null, avatar_url: null, role: 'user' };
   const isOwner = user?.id === idea.user_id;
 
   return (
@@ -245,13 +247,13 @@ export default function IdeaDetailPage() {
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-6">
                 <div className="flex items-center gap-2">
                   <div className="h-6 w-6 rounded-full bg-primary-700 flex items-center justify-center text-white text-[10px] font-bold">
-                    {idea.author.username.charAt(0).toUpperCase()}
+                    {author.username.charAt(0).toUpperCase()}
                   </div>
                   <Link
-                    href={`/profile/${idea.author.username}`}
+                    href={`/profile/${author.username}`}
                     className="font-medium text-gray-300 hover:text-primary-400 transition-colors"
                   >
-                    @{idea.author.username}
+                    @{author.username}
                   </Link>
                 </div>
                 <div className="flex items-center gap-1">
@@ -493,18 +495,18 @@ export default function IdeaDetailPage() {
                   Submitted by
                 </p>
                 <Link
-                  href={`/profile/${idea.author.username}`}
+                  href={`/profile/${author.username}`}
                   className="flex items-center gap-3 group"
                 >
                   <div className="h-10 w-10 rounded-full bg-primary-700 flex items-center justify-center text-white text-sm font-bold">
-                    {idea.author.username.charAt(0).toUpperCase()}
+                    {author.username.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-200 group-hover:text-primary-400 transition-colors">
-                      @{idea.author.username}
+                      @{author.username}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {idea.author.full_name || idea.author.role}
+                      {author.full_name || author.role}
                     </p>
                   </div>
                 </Link>
