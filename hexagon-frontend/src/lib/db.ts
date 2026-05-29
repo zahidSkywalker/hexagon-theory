@@ -55,6 +55,10 @@ export function serializeDoc(doc: Record<string, unknown>): Record<string, unkno
       } else {
         serialized[key] = value;
       }
+    } else if (Array.isArray(value)) {
+      serialized[key] = value.map(item =>
+        item && typeof item === 'object' ? serializeDoc(item as Record<string, unknown>) : item
+      );
     } else if (key === '_id' && value) {
       serialized[key] = (value as { toString(): string }).toString();
     } else {

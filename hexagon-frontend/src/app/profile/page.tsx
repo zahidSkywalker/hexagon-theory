@@ -251,9 +251,8 @@ export default function ProfilePage() {
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
-                        (
-                          e.target as HTMLImageElement
-                        ).parentElement!.innerHTML = profileData.username
+                        const parent = (e.target as HTMLImageElement).parentElement;
+                        if (parent) parent.textContent = profileData.username
                           .charAt(0)
                           .toUpperCase();
                       }}

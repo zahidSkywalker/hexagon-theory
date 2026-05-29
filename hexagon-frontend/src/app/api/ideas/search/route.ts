@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, serializeDocs } from '@/lib/db';
+import { ObjectId } from 'mongodb';
+import { getDb, serializeDoc, serializeDocs } from '@/lib/db';
 
 // GET /api/ideas/search?q=query
 export async function GET(request: NextRequest) {
@@ -39,8 +40,33 @@ export async function GET(request: NextRequest) {
 
     const total = await db.collection('ideas').countDocuments(query);
 
+    // Enrich with author and vote counts
+    const enrichedIdeas = await Promise.all(
+      ideas.map(async (idea) => {
+        const ideaId = idea._id as ObjectId;
+        const [upvoteCount, downvoteCount] = await Promise.all([
+          db.collection('votes').countDocuments({ idea_id: ideaId, vote_type: 'upvote' }),
+          db.collection('votes').countDocuments({ idea_id: ideaId, vote_type: 'downvote' }),
+        ]);
+        const author = await db.collection('users').findOne({ _id: idea.user_id as ObjectId });
+        const serialized = serializeDoc(idea as unknown as Record<string, unknown>) as Record<string, unknown>;
+        return {
+          ...serialized,
+          upvote_count: upvoteCount,
+          downvote_count: downvoteCount,
+          author: author ? {
+            id: author._id.toString(),
+            username: author.username,
+            full_name: author.full_name,
+            avatar_url: author.avatar_url,
+            role: author.role,
+          } : null,
+        };
+      })
+    );
+
     return NextResponse.json({
-      ideas: serializeDocs(ideas as unknown as Record<string, unknown>[]),
+      ideas: enrichedIdeas,
       total,
       limit,
       offset,

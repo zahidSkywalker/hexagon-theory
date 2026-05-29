@@ -19,9 +19,14 @@ export async function GET(request: NextRequest) {
       status: { $in: ['published', 'draft'] },
     });
 
-    const voteCount = await db.collection('votes').countDocuments({
-      user_id: new ObjectId(user.id),
-    });
+    // Count votes RECEIVED on user's ideas (not votes cast by user)
+    const userIdeaIds = await db.collection('ideas')
+      .find({ user_id: new ObjectId(user.id) }, { projection: { _id: 1 } })
+      .toArray();
+    const userIdeaObjectIds = userIdeaIds.map(doc => doc._id);
+    const votesReceivedCount = userIdeaObjectIds.length > 0
+      ? await db.collection('votes').countDocuments({ idea_id: { $in: userIdeaObjectIds } })
+      : 0;
 
     const commentCount = await db.collection('comments').countDocuments({
       user_id: new ObjectId(user.id),
@@ -34,6 +39,30 @@ export async function GET(request: NextRequest) {
       .limit(5)
       .toArray();
 
+    const enrichedIdeas = await Promise.all(
+      recentIdeas.map(async (idea) => {
+        const ideaId = idea._id as ObjectId;
+        const [upvoteCount, downvoteCount] = await Promise.all([
+          db.collection('votes').countDocuments({ idea_id: ideaId, vote_type: 'upvote' }),
+          db.collection('votes').countDocuments({ idea_id: ideaId, vote_type: 'downvote' }),
+        ]);
+        const author = await db.collection('users').findOne({ _id: idea.user_id as ObjectId });
+        const serialized = serializeDoc(idea as unknown as Record<string, unknown>) as Record<string, unknown>;
+        return {
+          ...serialized,
+          upvote_count: upvoteCount,
+          downvote_count: downvoteCount,
+          author: author ? {
+            id: author._id.toString(),
+            username: author.username,
+            full_name: author.full_name,
+            avatar_url: author.avatar_url,
+            role: author.role,
+          } : null,
+        };
+      })
+    );
+
     return NextResponse.json({
       id: user.id,
       email: user.email,
@@ -44,32 +73,14 @@ export async function GET(request: NextRequest) {
       role: user.role,
       email_verified: false,
       is_active: true,
-      created_at: new Date().toISOString(),
+      created_at: user.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
       stats: {
         total_ideas: ideaCount,
-        total_votes_received: voteCount,
+        total_votes_received: votesReceivedCount,
         total_comments: commentCount,
       },
-      ideas: recentIdeas.map((idea) => ({
-        id: idea._id.toString(),
-        slug: idea.slug,
-        title: idea.title,
-        category: idea.category,
-        target_region: idea.target_region || undefined,
-        status: idea.status,
-        view_count: idea.view_count || 0,
-        created_at: idea.created_at,
-        author: {
-          id: user.id,
-          username: user.username,
-          full_name: user.full_name,
-          avatar_url: user.avatar_url,
-          role: user.role,
-        },
-        upvote_count: 0,
-        downvote_count: 0,
-      })),
+      ideas: enrichedIdeas,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';

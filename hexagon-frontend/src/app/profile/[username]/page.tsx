@@ -103,9 +103,8 @@ export default function PublicProfilePage() {
                   className="h-full w-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
-                    (
-                      e.target as HTMLImageElement
-                    ).parentElement!.innerHTML = profile.username
+                    const parent = (e.target as HTMLImageElement).parentElement;
+                    if (parent) parent.textContent = profile.username
                       .charAt(0)
                       .toUpperCase();
                   }}

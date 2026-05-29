@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         avatar_url: serialized.avatar_url,
       },
       access_token: token,
+      token: token,
       token_type: "bearer",
     });
   } catch (error: unknown) {

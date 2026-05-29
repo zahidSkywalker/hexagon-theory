@@ -152,25 +152,48 @@ function CommentItem({
 export default function CommentTree({ comments, idea, activeTab, onUpdate }: CommentTreeProps) {
   const [expanded, setExpanded] = useState(true);
 
-  const filtered = comments.filter((c) =>
-    activeTab === "suggestions" ? c.is_suggestion : !c.is_suggestion
-  );
+  // If comments already have nested replies[] from API, use them directly
+  // Only filter top-level comments by tab, then recursively filter nested replies
+  const isTopLevel = (c: Comment) => !c.parent_id;
+  const topComments = comments.filter(isTopLevel);
 
-  // Build flat tree from root-level comments (those without parent_id or whose parent_id is not in the list)
-  const commentMap = new Map<string, Comment>();
-  filtered.forEach((c) => commentMap.set(c.id, c));
-
-  const rootComments = filtered.filter(
-    (c) => !c.parent_id || !commentMap.has(c.parent_id)
-  );
-
-  // Attach replies
-  const buildTree = (comment: Comment): Comment => {
-    const replies = filtered.filter((c) => c.parent_id === comment.id);
-    return { ...comment, replies: replies.map(buildTree) };
+  const filterByTab = (comment: Comment): Comment => {
+    const shouldInclude = activeTab === "suggestions" ? comment.is_suggestion : !comment.is_suggestion;
+    const filteredReplies = (comment.replies || []).map(filterByTab).filter(Boolean);
+    if (!shouldInclude && filteredReplies.length === 0) {
+      return null as unknown as Comment;
+    }
+    // If this comment doesn't match the tab but has matching replies, still show it as a container
+    return { ...comment, replies: filteredReplies };
   };
 
-  const tree = rootComments.map(buildTree);
+  const filtered = topComments.map(filterByTab).filter(Boolean);
+
+  // If no nested replies from API, fall back to flat tree building
+  const hasNestedReplies = comments.some(c => c.replies && c.replies.length > 0 && isTopLevel(c));
+  let tree: Comment[];
+
+  if (hasNestedReplies) {
+    tree = filtered;
+  } else {
+    // Legacy fallback: build tree from flat array
+    const filteredFlat = comments.filter((c) =>
+      activeTab === "suggestions" ? c.is_suggestion : !c.is_suggestion
+    );
+    const commentMap = new Map<string, Comment>();
+    filteredFlat.forEach((c) => commentMap.set(c.id, c));
+
+    const rootComments = filteredFlat.filter(
+      (c) => !c.parent_id || !commentMap.has(c.parent_id)
+    );
+
+    const buildTree = (comment: Comment): Comment => {
+      const replies = filteredFlat.filter((c) => c.parent_id === comment.id);
+      return { ...comment, replies: replies.map(buildTree) };
+    };
+
+    tree = rootComments.map(buildTree);
+  }
 
   if (tree.length === 0) {
     return (

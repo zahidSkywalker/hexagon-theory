@@ -52,6 +52,7 @@ export interface AuthUser {
   bio: string | null;
   role: string;
   avatar_url: string | null;
+  created_at: string | null;
 }
 
 export async function getAuthUser(request: NextRequest): Promise<AuthUser | null> {
@@ -67,7 +68,10 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
   }
 
   const db = await getDb();
-  const user = await db.collection('users').findOne({ _id: new ObjectId(decoded.sub) });
+  const user = await db.collection('users').findOne(
+    { _id: new ObjectId(decoded.sub) },
+    { projection: { password_hash: 0 } }
+  );
   if (!user) {
     return null;
   }
@@ -81,6 +85,7 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
     bio: (serialized.bio as string) || null,
     role: (serialized.role as string) || 'user',
     avatar_url: (serialized.avatar_url as string) || null,
+    created_at: (serialized.created_at as string) || null,
   };
 }
 
