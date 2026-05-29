@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       role: user.role,
       email_verified: false,
       is_active: true,
-      created_at: user.created_at || new Date().toISOString(),
+      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       stats: {
         total_ideas: ideaCount,
