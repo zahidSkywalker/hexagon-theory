@@ -72,6 +72,9 @@ export const api = {
       apiClient.post("/api/auth/login", data),
 
     getMe: () => apiClient.get("/api/auth/me"),
+
+    changePassword: (data: { current_password: string; new_password: string }) =>
+      apiClient.post("/api/auth/change-password", data),
   },
 
   // Users
