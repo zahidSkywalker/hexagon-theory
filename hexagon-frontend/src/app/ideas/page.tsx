@@ -64,7 +64,7 @@ export default function IdeasPage() {
             offset: currentOffset,
           });
           const data = response.data;
-          const items = Array.isArray(data) ? data : (data as { items?: IdeaListItem[] }).items || [];
+          const items = Array.isArray(data) ? data : (data as { ideas?: IdeaListItem[] }).ideas || [];
           setIdeas(reset ? items : (prev) => [...prev, ...items]);
           setHasMore(items.length === PAGE_SIZE);
         } else {
@@ -72,7 +72,7 @@ export default function IdeasPage() {
             params as { category?: string; status?: string; sort?: string; limit?: number; offset?: number }
           );
           const data = response.data;
-          const items = Array.isArray(data) ? data : (data as { items?: IdeaListItem[] }).items || [];
+          const items = Array.isArray(data) ? data : (data as { ideas?: IdeaListItem[] }).ideas || [];
           setIdeas(reset ? items : (prev) => [...prev, ...items]);
           setHasMore(items.length === PAGE_SIZE);
         }

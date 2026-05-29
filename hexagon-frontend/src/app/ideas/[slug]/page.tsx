@@ -91,7 +91,8 @@ export default function IdeaDetailPage() {
     if (!idea) return;
     try {
       const response = await api.comments.list(idea.id);
-      setComments(response.data);
+      const data = response.data;
+      setComments(Array.isArray(data) ? data : (data as { comments?: unknown[] }).comments || []);
     } catch (err) {
       console.error("Error refreshing comments:", err);
     }
