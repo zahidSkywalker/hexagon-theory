@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     const serialized = serializeDoc(user as unknown as Record<string, unknown>) as Record<string, unknown>;
     const token = generateToken(serialized._id as string);
 
+    
     return NextResponse.json({
       user: {
         id: serialized._id,
@@ -55,10 +56,12 @@ export async function POST(request: NextRequest) {
         role: serialized.role,
         avatar_url: serialized.avatar_url,
       },
-      token,
+      access_token: token,
+      token_type: "bearer",
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
+    
     return NextResponse.json({ detail: message }, { status: 500 });
   }
 }

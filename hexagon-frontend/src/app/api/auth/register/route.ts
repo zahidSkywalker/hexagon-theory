@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const token = generateToken(result.insertedId.toString());
 
-    return NextResponse.json({ user, token }, { status: 201 });
+    return NextResponse.json({ user, access_token: token, token_type: "bearer" }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     // Handle duplicate key errors
