@@ -49,6 +49,7 @@ export interface AuthUser {
   email: string;
   username: string;
   full_name: string | null;
+  bio: string | null;
   role: string;
   avatar_url: string | null;
 }
@@ -77,6 +78,7 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
     email: serialized.email as string,
     username: serialized.username as string,
     full_name: (serialized.full_name as string) || null,
+    bio: (serialized.bio as string) || null,
     role: (serialized.role as string) || 'user',
     avatar_url: (serialized.avatar_url as string) || null,
   };
